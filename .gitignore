@@ -1,0 +1,8 @@
+#remove all output files
+*.xlsx
+*.png
+*.pkl
+
+#remove intermediate codes
+.ipynb_checkpoints/
+__pycache__/

@@ -1,0 +1,1 @@
+Error while parsing response of article id in extractCategories():>58d7b5c2a3d24b75f276e9f0<. Error : <class 'KeyboardInterrupt'>
