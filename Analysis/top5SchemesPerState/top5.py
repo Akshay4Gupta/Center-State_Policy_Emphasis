@@ -60,6 +60,7 @@ def get_stats():
 
 # main
 if __name__ == '__main__':
+    print('python3 top5.py new - to process it again')
     all_stats = get_stats()
     writer = pd.ExcelWriter(output+'top5.xlsx', engine='xlsxwriter')
     df = [None]*len(all_stats.keys())
@@ -74,9 +75,6 @@ if __name__ == '__main__':
                 sheet[-1].append(x[0])
             while(len(sheet[-1]) < 6):
                 sheet[-1].append("")
-            # break
-        # pprint(per_scheme['uttar pradesh'])
-        # break
         df[i] = pd.DataFrame(sheet, columns = ['State', 1, 2, 3, 4, 5])
         df[i].to_excel(writer, sheet_name=scheme, index = False)
     writer.save()
