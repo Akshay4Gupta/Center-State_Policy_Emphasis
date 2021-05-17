@@ -136,11 +136,11 @@ party ={
 }
 
 
-def findES_Doc(entityName):
+def find_mlaER(entityName, year):
 #     "from" : 0, "size" : 10,
 
     return  {
-      "size" : 15,
+      "size" : 20,
       "query": {
         "bool": {
           "should": {
@@ -148,6 +148,12 @@ def findES_Doc(entityName):
                 "Electoral_Info.Position": {
                   "gte": 1.0,
                   "lte": 10.0
+                }
+              },
+            "range": {
+                "Electoral_Info.Year": {
+                  "gte": year - 6,
+                  "lte": year
                 }
               }
           },
@@ -257,10 +263,10 @@ def isMla(media_er,mla_er, article_states):
                         Ent = ent['text'].strip().lower()
                         Jscore = get_jaro_distance(Ent, mlaEnt)
                         l = min(len(Ent),len(mlaEnt))
-                        if Ent in party:
-                            Jscore2 = get_jaro_distance(party[Ent].strip().lower(), mlaEnt)
+                        if Ent.upper() in party:
+                            Jscore2 = get_jaro_distance(party[Ent.upper()].strip().lower(), mlaEnt)
                             if Jscore2 > Jscore:
-                                l = min(party[Ent].strip().lower(),len(mlaEnt))
+                                l = min(len(party[Ent.upper()].strip().lower()),len(mlaEnt))
 
                         if ((l  <= 5 and Jscore >= 0.98) or (l > 5 and l <=12 and Jscore >=.95 ) or (l> 12  and Jscore >= .92) ):
                             Score += 1
@@ -276,7 +282,7 @@ def isMla(media_er,mla_er, article_states):
 
 
 
-def findMla(names, states):
+def findMla(names, states, publishedYear):
     # print(states)
     """
     returns best match for a name and state from MLA ER database
@@ -287,7 +293,7 @@ def findMla(names, states):
         # print('name: ', name)
         media_er = es.search(index=es_index_mediaER, body=find_mediaER(name))
         # pprint(media_er)
-        mla_er = es.search(index=es_index_mlaER, body=findES_Doc(name))
+        mla_er = es.search(index=es_index_mlaER, body=find_mlaER(name, publishedYear))
         # pprint(mla_er)
         if (len(media_er['hits']['hits']) > 0):
             mla_info = isMla(media_er['hits']['hits'][0]['_source'],mla_er['hits']['hits'], states)
@@ -303,6 +309,7 @@ def extractMla(collection):
     cursor = collection.find({'entities':{"$exists":True}}).batch_size(50)
     state = dict()  # dict of state where each state is dict of mla names with count value
     for article in tqdm(cursor):
+        publishedYear = int(article['publishedDate'].split('-')[0])
         name_list = set()
         for per in article['entities']:
             if per['type'].lower() == "person":
@@ -312,7 +319,7 @@ def extractMla(collection):
         # print("names: ", name_list )
         if(len(name_list) < 1):
             continue
-        mla_list = findMla(name_list,article['states'])
+        mla_list = findMla(name_list,article['states'], publishedYear)
         # print(mla_list)
 
         """
@@ -338,7 +345,7 @@ def extractMla(collection):
 
 
 
-def tablePlot(state, collName, writer):
+def toSheet(state, collName, writer):
     states = list(state.keys())
     st_name = np.empty((35,1), dtype=object)
     cols = [1, 2, 3, 4, 5]
@@ -372,7 +379,7 @@ for collName in collNames:
     print('Executing for : ', collName)
     collection = db[collName]
     res = extractMla(collection)
-    tablePlot(res, collName, writer)
+    toSheet(res, collName, writer)
 writer.save()
 
 
@@ -384,6 +391,8 @@ Finding MLA ??
 2. constituency and party in MLA ER
 3. State in meida-db
 4. State in MLA ER
+
+5. can also use publishdate of the newssource to filter out the results
 
 Have only these info to find whether the person found in NER
 MLA or not??
