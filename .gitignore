@@ -2,6 +2,7 @@
 *.xlsx
 *.png
 *.pkl
+*.asc
 
 #remove intermediate codes
 .ipynb_checkpoints/

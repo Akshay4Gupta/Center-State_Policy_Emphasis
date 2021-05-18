@@ -58,11 +58,13 @@ def get_stats():
             pickle.dump(all_stats, file)
         return all_stats
 
-# main
-if __name__ == '__main__':
-    print('python3 top5.py new - to process it again')
+def printExcel():
     all_stats = get_stats()
+
     writer = pd.ExcelWriter(output+'top5.xlsx', engine='xlsxwriter')
+    workbook = writer.book
+    wrap_format = workbook.add_format({'text_wrap': False, 'align': 'left'})
+
     df = [None]*len(all_stats.keys())
     for i, (scheme, per_scheme) in enumerate(all_stats.items()):
         # print(per_scheme['uttar pradesh'])
@@ -73,8 +75,28 @@ if __name__ == '__main__':
             per_scheme[keys] = sorted(per_scheme[keys].items(), key = lambda ele: ele[1], reverse = True)[:5]
             for j, x in enumerate(per_scheme[keys]):
                 sheet[-1].append(x[0])
-            while(len(sheet[-1]) < 6):
+                sheet[-1].append(x[1])
+            while(len(sheet[-1]) < 11):
                 sheet[-1].append("")
-        df[i] = pd.DataFrame(sheet, columns = ['State', 1, 2, 3, 4, 5])
+
+        # Saving to excel and formating the sheet
+        df[i] = pd.DataFrame(sheet, columns = ['State', 1, "total1", 2, "total2", 3, "total3", 4, "total4", 5, "total5"])
+        df[i].sort_values(by = ["total1", "total2", "total3", "total4", "total5"], ascending = [False]*5, inplace = True)
         df[i].to_excel(writer, sheet_name=scheme, index = False)
+        worksheet = writer.sheets[scheme]
+        worksheet.set_column(0, len(df[i].columns) - 1, cell_format=wrap_format)
+        for j, col in enumerate(df[i].columns):
+            column_len = max(df[i][col].astype(str).str.len().max(), len(str(col)) + 2)
+            worksheet.set_column(j, j, column_len)
+        worksheet.freeze_panes(1, 0)
     writer.save()
+
+# main
+if __name__ == '__main__':
+    print('python3 top5.py new - to process it again')
+    task = input('enter "output" to print the excel sheet: ')
+    if(task.strip().lower() == 'output'):
+        printExcel()
+    else:
+
+        pprint(all_stats)

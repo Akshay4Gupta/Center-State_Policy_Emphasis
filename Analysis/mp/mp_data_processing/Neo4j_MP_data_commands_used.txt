@@ -1,0 +1,10 @@
+commands to collect MP data
+
+
+MATCH (a)-[r:electedfrom]->(b) RETURN a,r,b
+
+
+MATCH (a)-[r:geoBelongs]-(b) RETURN a,r,b
+
+
+MATCH (a:politician)-[r]-(b:politicalparty) RETURN a,b,r
