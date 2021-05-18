@@ -3,6 +3,7 @@
 *.png
 *.pkl
 *.asc
+*.json
 
 #remove intermediate codes
 .ipynb_checkpoints/
