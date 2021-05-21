@@ -8,3 +8,4 @@
 #remove intermediate codes
 .ipynb_checkpoints/
 __pycache__/
+output/
