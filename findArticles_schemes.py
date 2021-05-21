@@ -21,6 +21,9 @@ def readfromFile(filename):
             if("yojana" in line.lower()):
                 line2 = line.lower().replace("yojana", "scheme") #also change yojana to yojna
                 result += line2.strip() + '|'
+            elif("scheme" in line.lower()):
+                line2 = line.lower().replace("scheme", "yojana") #also change yojana to yojna
+                result += line2.strip() + '|'
             result += line.strip()
         return result
 

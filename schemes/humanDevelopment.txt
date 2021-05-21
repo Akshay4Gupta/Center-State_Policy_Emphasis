@@ -5,10 +5,12 @@ Rural Godown Scheme
 #Food Security
 Midday Meal Scheme
 Seva Bhoj Scheme
-Annapurna Scheme
 
 #PDS
 Antyodaya Anna Yojana
+Public Distribution System
+Priority Household
+Annapurna Yojana
 
 Gramin Awaas Yojana
 Pradhan Mantri Gramin Awaas Yojana

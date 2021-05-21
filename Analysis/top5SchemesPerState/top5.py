@@ -58,15 +58,60 @@ def get_stats():
             pickle.dump(all_stats, file)
         return all_stats
 
+def correct_and_save_xlsx(df, writer):
+    workbook = writer.book
+    wrap_format = workbook.add_format({'text_wrap': False, 'align': 'left'})
+
+    for scheme in df:
+        df[scheme].to_excel(writer, sheet_name=scheme, index = False)
+        worksheet = writer.sheets[scheme]
+        worksheet.set_column(0, len(df[scheme].columns) - 1, cell_format=wrap_format)
+        for j, col in enumerate(df[scheme].columns):
+            column_len = max(df[scheme][col].astype(str).str.len().max(), len(str(col)) + 2)
+            worksheet.set_column(j, j, column_len)
+        worksheet.freeze_panes(1, 0)
+    writer.save()
+
+def getPerCapitaCoverage():
+    all_stats = get_stats()
+
+    writer = pd.ExcelWriter(output+'top5_perCapita.xlsx', engine='xlsxwriter')
+    workbook = writer.book
+    wrap_format = workbook.add_format({'text_wrap': False, 'align': 'left'})
+
+    df = pd.read_excel(output+'top5_perCapita.xlsx', sheet_name = ['Population', 'MP', 'MLA'])
+    for key in df:
+        # df[key].sort_values(by = ["State"], ascending = [True], inplace = True)
+        # df[key]['State'] = df[key]['State'].str.lower()
+        df[key].to_excel(writer, sheet_name=key, index = False)
+
+    for scheme, per_scheme in all_stats.items():
+        per_scheme = {key: val for key, val in sorted(per_scheme.items(), key = lambda ele: ele[0], reverse = True)}
+        sheet = []
+        for keys in per_scheme:
+            sheet.append([keys])
+            total = sum(per_scheme[keys].values())
+            sheet[-1].append(total)
+            try:
+                percapita = df['Population'][df['Population']['State'] == keys]['total'].values[0]/1000000
+                perMLA = df['MLA'][df['MLA']['State'] == keys]['total'].values[0]
+                perMP = df['MP'][df['MP']['State'] == keys]['total'].values[0]
+                sheet[-1].append(round(total/percapita, 2))
+                sheet[-1].append(round(total/perMLA, 2))
+                sheet[-1].append(round(total/perMP, 2))
+            except:
+                while(len(sheet[-1]) < 5):
+                    sheet[-1].append(0)
+        df[scheme] = pd.DataFrame(sheet, columns = ['State', 'total Articles', 'perCapitaCoverage', 'perMLACoverage', 'perMPCoverage'])
+        df[scheme].sort_values(by = ["total Articles"], ascending = [False], inplace = True)
+    correct_and_save_xlsx(df, writer)
+
 def printExcel():
     all_stats = get_stats()
 
     writer = pd.ExcelWriter(output+'top5.xlsx', engine='xlsxwriter')
-    workbook = writer.book
-    wrap_format = workbook.add_format({'text_wrap': False, 'align': 'left'})
-
-    df = [None]*len(all_stats.keys())
-    for i, (scheme, per_scheme) in enumerate(all_stats.items()):
+    df = {}
+    for scheme, per_scheme in all_stats.items():
         # print(per_scheme['uttar pradesh'])
         per_scheme = {key: val for key, val in sorted(per_scheme.items(), key = lambda ele: ele[0], reverse = True)}
         sheet = []
@@ -80,23 +125,17 @@ def printExcel():
                 sheet[-1].append("")
 
         # Saving to excel and formating the sheet
-        df[i] = pd.DataFrame(sheet, columns = ['State', 1, "total1", 2, "total2", 3, "total3", 4, "total4", 5, "total5"])
-        df[i].sort_values(by = ["total1", "total2", "total3", "total4", "total5"], ascending = [False]*5, inplace = True)
-        df[i].to_excel(writer, sheet_name=scheme, index = False)
-        worksheet = writer.sheets[scheme]
-        worksheet.set_column(0, len(df[i].columns) - 1, cell_format=wrap_format)
-        for j, col in enumerate(df[i].columns):
-            column_len = max(df[i][col].astype(str).str.len().max(), len(str(col)) + 2)
-            worksheet.set_column(j, j, column_len)
-        worksheet.freeze_panes(1, 0)
-    writer.save()
+        df[scheme] = pd.DataFrame(sheet, columns = ['State', 1, "total1", 2, "total2", 3, "total3", 4, "total4", 5, "total5"])
+        df[scheme].sort_values(by = ["total1", "total2", "total3", "total4", "total5"], ascending = [False]*5, inplace = True)
+    correct_and_save_xlsx(df, writer)
 
 # main
 if __name__ == '__main__':
     print('python3 top5.py new - to process it again')
-    task = input('enter "output" to print the excel sheet: ')
-    if(task.strip().lower() == 'output'):
+    choice = input('enter "p" for per capita coverage stats and "o" for schemes stats else will exit: ').lower()[0]
+    if(choice == 'o'):
         printExcel()
+    elif(choice == 'p'):
+        getPerCapitaCoverage()
     else:
-
-        pprint(all_stats)
+        pprint(get_stats())
