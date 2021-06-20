@@ -79,7 +79,7 @@ def extractEntity(article):
     open_calais_keys = rotate(open_calais_keys, 1)
     global count
     count+=1
-    text=article['text']
+    text=str(article['text'])
 
     entities =[]
     socialTags=[]

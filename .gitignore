@@ -9,3 +9,4 @@
 #remove intermediate codes
 .ipynb_checkpoints/
 __pycache__/
+Analysis/statement/stanford-corenlp-full-2018-10-05/

@@ -27,33 +27,47 @@ def readfromFile(filename):
             result += line.strip()
         return result
 
-print("Finding articles...")
-# articles = input('Enter the scheme name: ')
-try:
-    articles = sys.argv[1]
-except:
-    print('Enter the scheme name in the argument as: python3 findArticles_schemes.py agriculture(_schemes will be added later)')
-    sys.exit()
+def printArticles(collName, keywords):
+    with open("articles.ignore", 'w+') as file:
+        collection = my_db[collName + '_schemes']
+        scheme_articles = collection.find({'$and':[{'text': {'$regex': keywords, '$options': 'i'}}]},
+                            no_cursor_timeout=True)
+        articles = []
+        for art in scheme_articles:
+            articles.append(art['text'])
+            if(len(articles) == 100):
+                file.write('\n\n'.join(articles))
+                articles = []
+                break
 
-keywords = readfromFile(articles)
-print('KEYWORDS:  ', keywords)
+if __name__ == '__main__':
+    print("Finding articles...")
+    # articles = input('Enter the scheme name: ')
+    try:
+        articles = sys.argv[1]
+    except:
+        print('Enter the scheme name in the argument as: python3 findArticles_schemes.py agriculture(_schemes will be added later)')
+        sys.exit()
 
-#{'publishedDate':{'$regex' :' 2011 | 2012 | 2013 | 2014-01 |2014-02 | 2014-03 | 2014-04'}},
-# Enter the base set of keywords in the regex below, separated by |
-x = art_db.articles.find({'$and':[{'text': {'$regex': keywords, '$options': 'i'}}]},
-                     no_cursor_timeout=True)
+    keywords = readfromFile(articles)
+    print('KEYWORDS:  ', keywords)
 
-print("Storing articles now...")
-coll = my_db[articles + '_schemes']
-art_map = {}
-cnt = 0
+    #{'publishedDate':{'$regex' :' 2011 | 2012 | 2013 | 2014-01 |2014-02 | 2014-03 | 2014-04'}},
+    # Enter the base set of keywords in the regex below, separated by |
+    x = art_db.articles.find({'$and':[{'text': {'$regex': keywords, '$options': 'i'}}]},
+                         no_cursor_timeout=True)
 
-for art in x:
-    cnt+=1
-    if(cnt%10000 == 0):
-        print('Done for '+str(cnt)+' article')
-    url = art['articleUrl']
+    print("Storing articles now...")
+    coll = my_db[articles + '_schemes']
+    art_map = {}
+    cnt = 0
 
-    if url not in art_map:
-        art_map[url] = 1
-        coll.insert_one(art)
+    for art in x:
+        cnt+=1
+        if(cnt%10000 == 0):
+            print('Done for '+str(cnt)+' article')
+        url = art['articleUrl']
+
+        if url not in art_map:
+            art_map[url] = 1
+            coll.insert_one(art)

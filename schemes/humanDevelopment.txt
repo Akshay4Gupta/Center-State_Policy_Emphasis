@@ -2,15 +2,13 @@ Gramin Bhandaran Yojana
 
 Rural Godown Scheme
 
-#Food Security
-Midday Meal Scheme
-Seva Bhoj Scheme
-
-#PDS
+#PDS & Food Security
 Antyodaya Anna Yojana
 Public Distribution System
 Priority Household
 Annapurna Yojana
+Midday Meal Scheme
+Seva Bhoj Scheme
 
 Gramin Awaas Yojana
 Pradhan Mantri Gramin Awaas Yojana
@@ -24,6 +22,7 @@ National Urban Renewal Mission
 
 MGNREGA
 NREGA
+MNREGA
 Mahatma Gandhi National Rural Employment Guarantee Act
 National Rural Employment Guarantee Act
 
@@ -45,8 +44,6 @@ Gram Sadak Yojana
 Pradhan Mantri Gram Sadak Yojana
 PM Gram Sadak Yojana
 
-Rajiv Awas Yojana
-
 Grameen Vidyutikaran Yojana
 Rajiv Gandhi Grameen Vidyutikaran Yojana
 
@@ -57,6 +54,7 @@ Atal Mission for Rejuvenation and Urban Transformation
 
 Awas Yojana
 Pradhan Mantri Awas Yojana
+Rajiv Awas Yojana
 
 Svamitva Yojana
 Survey of Villages Abadi and Mapping with Improvised Technology In Village Areas

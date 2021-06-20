@@ -27,6 +27,10 @@ Scheme for Strengthening of Agricultural Marketing Infrastructure
 
 PM-KISAN
 Kisan Samman Nidhi
+Kisan Samman Nidhi Yojana
+Pradhan Mantri Kisan Samman Nidhi
+PM Kisan Samman Nidhi
+PM Kisan Samman Nidhi Yojana
 
 Soil Health Card
 
@@ -36,6 +40,7 @@ Kisan Suraksha Abhiyan Utthan Mahabhiyan
 Kusum-Yojana
 
 Kisan Credit Card
+Kisan Credit Cards
 KCC scheme
 KCC-scheme
 

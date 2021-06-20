@@ -672,8 +672,8 @@ District Id,Location Name
 89,palwal district
 90,model town
 90,narela
-90,north west
-90,north-west
+90,north west delhi
+90,North-west delhi
 90,north-west district
 90,rohini
 90,rohini district
@@ -683,7 +683,7 @@ District Id,Location Name
 91,kotwali
 91,mehrauli
 91,mehrauli district
-91,north
+91,north delhi
 91,north town
 91,sadar bazar
 92,azadpur
@@ -718,7 +718,7 @@ District Id,Location Name
 94,new-delhi
 94,parliament street
 94,suraj
-95,central
+95,central delhi
 95,central town
 95,darya ganj
 95,daryaganj
@@ -729,14 +729,14 @@ District Id,Location Name
 96,punjabi bagh
 96,rajouri garden
 96,tilak nagar
-96,west
+96,west delhi
 97,delhi cantonment
 97,dwarka
 97,dwarka district
 97,najafgarh
 97,najafgarh district
-97,south west
-97,south-west
+97,south west delhi
+97,South-west delhi
 97,south-west district
 97,vasant vihar
 98,defence colony
@@ -745,7 +745,7 @@ District Id,Location Name
 98,saket
 98,saket city
 98,saket district
-98,south
+98,south delhi
 99,anupgarh
 99,ganganagar
 99,ganganagar district

@@ -12,7 +12,7 @@ import os
 import nameMatch
 import numpy as np
 import pandas as pd
-
+import sys
 
 # initialization
 output = 'output/'
@@ -203,25 +203,36 @@ def find_mediaER(entityName):
       }
     }
 
-def findMlaData(Mla_name, Mla_state):
-    return  {
-      "query": {
-          "bool": {
-            "must": [
-              {
-                "match": {
-                  "Name": Mla_name
+def findMPData(MP_id):
+    return {
+    "query": {
+        "bool": {
+         "filter": {
+                "term": {
+                   "_id": MP_id
                 }
-              },
-              {
-                "match": {
-                  "State": Mla_state
-                }
-              }
-            ]
-          }
-      }
+            }
+        }
     }
+}
+    # return  {
+    #   "query": {
+    #       "bool": {
+    #         "must": [
+    #           {
+    #             "match": {
+    #               "Name": Mla_name
+    #             }
+    #           },
+    #           {
+    #             "match": {
+    #               "State": Mla_state
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   }
+    # }
 
 
 
@@ -255,7 +266,7 @@ def isMp(media_er,mp_db, article_states):
                 mla_entities.update(partyList)
 
 
-
+        mp_id = mla_info['_id']
         for state in article_states:
             if mla_state == state.lower().strip():
                 Score = 1
@@ -264,12 +275,13 @@ def isMp(media_er,mp_db, article_states):
             if 'associatedEntities' not in media_er:
                 if Score >= 1:
                     # print("here ------------->")
-                    return (mla_name, mla_state)
+                    return (mla_name, mla_state, mp_id)
                 return None
 
             else:
                 for ent in media_er['associatedEntities']:
                     for mlaEnt in mla_entities:
+                        count = ent['count']
                         Ent = ent['text'].strip().lower()
                         Jscore = get_jaro_distance(Ent, mlaEnt)
                         l = min(len(Ent),len(mlaEnt))
@@ -279,14 +291,14 @@ def isMp(media_er,mp_db, article_states):
                                 l = min(len(party[Ent.upper()].strip().lower()),len(mlaEnt))
 
                         if ((l  <= 5 and Jscore >= 0.98) or (l > 5 and l <=12 and Jscore >=.95 ) or (l> 12  and Jscore >= .92) ):
-                            Score += 1
+                            Score += count
 
                 if Score > maxScore:
                     res = idx
                     maxScore = Score
 
     if res != -1:
-        return (mp_db[res]['_source']['Name'].lower().strip(), mp_db[res]['_source']['State'].lower().strip())
+        return (mp_db[res]['_source']['Name'].lower().strip(), mp_db[res]['_source']['State'].lower().strip(), mp_db[res]["_id"])
     return None
 
 
@@ -297,6 +309,7 @@ def findMp(names, states, publishedYear):
     """
     returns best match for a name and state from MP database
     """
+    MP_mapping = dict()
     distinct_names = set()
     for name in names:
         name = name.lower()
@@ -309,16 +322,20 @@ def findMp(names, states, publishedYear):
             mp_info = isMp(media_er['hits']['hits'][0]['_source'],mp_db['hits']['hits'], states)
 
             if mp_info  != None:
+                mp_nm, mp_st, mp_id = mp_info
+                MP_mapping[name] = [media_er['hits']['hits'][0]['_source']['stdName'].lower().strip(), (mp_nm, mp_st)]
                 distinct_names.add(mp_info)
 
-    return distinct_names
+    return distinct_names, MP_mapping
 
 
 
-def extractMp(collection):
-    cursor = collection.find({'entities':{"$exists":True}}).batch_size(50)
+def extractMp(collection, startDate, endDate):
+    cursor=collection.find({'$and':[{'entities':{"$exists":True}},{'publishedDate':{'$gte':startDate}},{'publishedDate':{'$lte':endDate}} ]},no_cursor_timeout=True).batch_size(50)
+    # cursor = collection.find({'entities':{"$exists":True}}).batch_size(50)
     state = dict()  # dict of state where each state is dict of mla names with count value
     for article in tqdm(cursor):
+
         publishedYear = int(article['publishedDate'].split('-')[0])
         name_list = set()
         for per in article['entities']:
@@ -327,9 +344,11 @@ def extractMp(collection):
                     name_list.add(per['name'].lower()) # stores all person mentioned in an article
 
         # print("names: ", name_list )
-        if(len(name_list) < 1):
+        if(len(name_list) < 1 or "states" not in article ):
             continue
-        mp_list = findMp(name_list, article['states'], publishedYear)
+        mp_list, MP_mapping = findMp(name_list, article['states'], publishedYear)
+        if(len(mp_list) > 0):
+            rest = collection.update_one({"_id": article['_id']}, {"$set": {'mp':MP_mapping}}, upsert = False)
         # print(mp_list)
 
         """
@@ -337,13 +356,13 @@ def extractMp(collection):
         """
 
         for mp_info in mp_list:
-            mp_nm, st  = mp_info
+            mp_nm, st,  mp_id  = mp_info
             if st not in state:
                 state[st] = dict()
             if mp_nm not in state[st]:
-                state[st][mp_nm] = 1
+                state[st][(mp_nm, mp_id)] = 1
             else:
-                state[st][mp_nm] += 1
+                state[st][(mp_nm, mp_id)] += 1
 
 
     cursor.close()
@@ -355,25 +374,55 @@ def extractMp(collection):
 
 
 
-def toSheet(state, collName, writer):
+def toSheet(state, collName, writer, startDate):
+
+    with open('./coalition', 'rb') as f:
+        coalition = pickle.load(f)
+
+    ls_election_year = startDate.split('-')[0]
+    nda_alliance = coalition['nda_' + ls_election_year]
+    upa_alliance = coalition['upa_' + ls_election_year]
+
     states = list(state.keys())
     st_name = np.empty((35,1), dtype=object)
-    cols = [1, 2, 3, 4, 5]
-    data = np.empty((35,5), dtype=object)
+    cols = ["1", "2", "3", "4", "5", "NDA", "UPA", "Non Aligned"]
+    data = np.empty((35,8), dtype=object)
     for st_idx,st in enumerate(states):
         st_name[st_idx] = st
         names = list(state[st].keys())[:5]
         count = list(state[st].values())[:5]
         totalCount = sum(count)
-        mla_info = []
+        nda_count, upa_count, non_aligned_count = 0,0,0
         for idx,mlaName in enumerate(names):
-            res = es.search(index=es_index_mp, body=findMlaData(mlaName,st))
-            for mps in res['hits']['hits']:
-                if mps['_source']["Electoral_Info"][0]['Position'] > 5:
-                    continue
-                data[st_idx,idx] = ({"Name ":mlaName}, {'Count ': count[idx]},{"% ":(count[idx]/totalCount)*100} ,{"ElectrolInfo ":mps['_source']['Electoral_Info']})
-                break
+            res = es.search(index=es_index_mp, body=findMPData(mlaName[1]))
 
+            electoral_parties = res['hits']['hits'][0]['_source']["Electoral_Info"][0]['Party']
+            if type(electoral_parties) == str:
+                electoral_parties = [electoral_parties]
+
+            alliance = "Non Aligned"
+            for ele_party in electoral_parties:
+                ele_party = ele_party.lower().strip()
+                # print(ele_party)
+                if ele_party in nda_alliance:
+                    alliance = "NDA"
+                    nda_count += 1
+                elif ele_party in upa_alliance:
+                    alliance = "UPA"
+                    upa_count += 1
+                else:
+                    non_aligned_count += 1
+            ElectrolInfo = res['hits']['hits'][0]['_source']['Electoral_Info']
+            data[st_idx,idx] = (
+            {"Name ":mlaName[0]},
+            {'Count ': count[idx]},
+            {"% ":(count[idx]/totalCount)*100},
+            {"Alliance": alliance} ,
+            {"ElectrolInfo ":ElectrolInfo}
+             )
+        data[st_idx,5] = nda_count
+        data[st_idx,6] = upa_count
+        data[st_idx,7] = non_aligned_count
 
     data = np.append(st_name, data, axis=1)
 
@@ -384,17 +433,35 @@ def toSheet(state, collName, writer):
 
 
 
-collNames = ['industrialization_schemes','tourism_culture_schemes','agriculture_schemes', 'environment_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
-# collNames = ['environment_schemes']
-writer = pd.ExcelWriter(output+'mp.xlsx', engine='xlsxwriter')
+# collNames = ['agriculture_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
+# collNames = ['industrialization_schemes','tourism_culture_schemes','agriculture_schemes', 'environment_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
+collNames = ['environment_schemes']
+startDate, endDate = '2010-01-01', '2021-05-01'
+if len(sys.argv) > 1:
+    startDate = sys.argv[1]
+if len(sys.argv) > 2:
+    endDate = sys.argv[2]
+
+print("timeline is : " ,  startDate, " to " , endDate)
+writer = pd.ExcelWriter(output+'mp' + startDate.split('-')[0] + '.xlsx', engine='xlsxwriter')
 for collName in collNames:
     print('Executing for : ', collName)
     collection = db[collName]
-    res = extractMp(collection)
-    toSheet(res, collName, writer)
+    res = extractMp(collection, startDate , endDate)
+    toSheet(res, collName, writer, startDate)
 writer.save()
 
 
+
+"""
+Election Dates:
+
+2019 LS = 2019-05-23
+
+2014 LS = 2014-05-16
+
+2009 LS = 2009-05-16
+"""
 
 
 """

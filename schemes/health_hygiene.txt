@@ -2,6 +2,7 @@
 Ayushman Bharat
 Ayushman Bharat Yojana
 Pradhan Mantri Jan Arogya Yojana
+Jan Arogya Yojana
 Awaz Health Insurance Scheme
 Aam Aadmi Bima Yojana
 Bhamashah Swasthya Bima Yojana
@@ -11,6 +12,7 @@ Pradhan Mantri Suraksha Bima Yojana
 Suraksha Bima Yojana
 Pradhan Mantri Jeevan Jyoti Bima Yojana
 Jeevan Jyoti Bima Yojana
+Rashtriya Arogya Nidhi
 Employees State Insurance
 
 Matritva Vandana Yojana
@@ -42,7 +44,6 @@ Mission Indradhanush
 National Mental Health Program
 Swasthya Suraksha Yojana
 Pulse Polio
-Rashtriya Arogya Nidhi
 National Tobacco Control Programme
 Tuberculosis control initiative
 Revised National TB Control Programme

@@ -12,7 +12,7 @@ import os
 import nameMatch
 import numpy as np
 import pandas as pd
-
+import sys
 
 # initialization
 output = 'output/'
@@ -260,6 +260,7 @@ def isMla(media_er,mla_er, article_states):
             else:
                 for ent in media_er['associatedEntities']:
                     for mlaEnt in mla_entities:
+                        count = ent['count']
                         Ent = ent['text'].strip().lower()
                         Jscore = get_jaro_distance(Ent, mlaEnt)
                         l = min(len(Ent),len(mlaEnt))
@@ -269,7 +270,7 @@ def isMla(media_er,mla_er, article_states):
                                 l = min(len(party[Ent.upper()].strip().lower()),len(mlaEnt))
 
                         if ((l  <= 5 and Jscore >= 0.98) or (l > 5 and l <=12 and Jscore >=.95 ) or (l> 12  and Jscore >= .92) ):
-                            Score += 1
+                            Score += count
 
                 if Score > maxScore:
                     res = idx
@@ -305,8 +306,9 @@ def findMla(names, states, publishedYear):
 
 
 
-def extractMla(collection):
-    cursor = collection.find({'entities':{"$exists":True}}).batch_size(50)
+def extractMla(collection, startDate, endDate):
+    cursor=collection.find({'$and':[{'entities':{"$exists":True}},{'publishedDate':{'$gte':startDate}},{'publishedDate':{'$lte':endDate}} ]},no_cursor_timeout=True).batch_size(50)
+    # cursor = collection.find({'entities':{"$exists":True}}).batch_size(50)
     state = dict()  # dict of state where each state is dict of mla names with count value
     for article in tqdm(cursor):
         publishedYear = int(article['publishedDate'].split('-')[0])
@@ -372,13 +374,23 @@ def toSheet(state, collName, writer):
 
 
 
-collNames = ['industrialization_schemes','tourism_culture_schemes','agriculture_schemes', 'environment_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
+# collNames = ['industrialization_schemes','tourism_culture_schemes','agriculture_schemes', 'environment_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
 # collNames = ['environment_schemes']
-writer = pd.ExcelWriter(output+'mla.xlsx', engine='xlsxwriter')
+collNames = ['agriculture_schemes', 'health_hygiene_schemes', 'humanDevelopment_schemes']
+
+
+startDate, endDate = '2010-12-31', '2021-05-01'
+if len(sys.argv) > 1:
+    startDate = sys.argv[1]
+if len(sys.argv) > 2:
+    endDate = sys.argv[2]
+
+print("timeline is : " ,  startDate, " to " , endDate)
+writer = pd.ExcelWriter(output+'mla' + startDate.split('-')[0] + '.xlsx', engine='xlsxwriter')
 for collName in collNames:
     print('Executing for : ', collName)
     collection = db[collName]
-    res = extractMla(collection)
+    res = extractMla(collection, startDate, endDate)
     toSheet(res, collName, writer)
 writer.save()
 

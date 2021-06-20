@@ -34,14 +34,14 @@ def something(collection, collName):
     plt.xticks(rotation = 90)
     plt.title(collName)
     plt.tight_layout()
-    plt.savefig(collName)
+    plt.savefig('output_dist_only/'+collName)
     plt.clf()
 
 if __name__ == '__main__':
     client  = MongoClient('mongodb://localhost:27017/')
     db=client['media-db2']
     # collName = input("Enter the collection Name: ")
-    collNames = ['development']
+    collNames = ['agriculture', 'humanDevelopment', 'environment', 'industrialization', 'tourism_culture', 'health_hygiene']
     for collName in collNames:
         collName += '_schemes'
         collection=db[collName]

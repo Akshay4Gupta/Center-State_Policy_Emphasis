@@ -46,6 +46,9 @@ def get_schemes(path):
                     if("yojana" in line):
                         line2 = line.replace("yojana", "scheme")
                         schemes[scheme_set_name].append(line2)
+                    if "scheme" in line:
+                        line2 = line.replace("scheme", "yojana")
+                        schemes[scheme_set_name].append(line2)
             five_schemes[file_path.name.split('.')[0]] = schemes
     return five_schemes
 
@@ -98,8 +101,6 @@ if __name__ == '__main__':
 
     all_stats = {}
     for coll in schemes_clubbed:
-        # if coll != 'lifestyle':
-        #     continue
         collName = coll + '_schemes'
         collection = db[collName]
         scheme_stat = num_articles_per_schemes(collName, collection, schemes_clubbed[coll])

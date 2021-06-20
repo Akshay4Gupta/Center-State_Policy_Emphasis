@@ -3,12 +3,12 @@
 import pprint
 from pymongo import MongoClient
 from district_extractor import districtExtractor
-from tqdm import tqdm
+
 
 
 client = MongoClient('mongodb://localhost:27017')
 db = client['media-db2']
-collName = input("Enter name of collections: ").strip()
+collName = input("enter collection name : ")
 collection=db[collName]
 
 
@@ -20,6 +20,7 @@ def extractLocation(article):
     districtName_code = districtExtractor.districtFinder(article['text'])
 
     try:
+        print(districtName_code)
         res = collection.update_one({"_id": article['_id']}, {"$set": {'districtsLocation':districtName_code}})
     except:
         desc='Error while parsing response of article id in extractLocation():>'+str(article['_id'])+'<. Error : '+ str(sys.exc_info()[0])
@@ -32,8 +33,9 @@ def extractLocation(article):
 def fetchLoc():
     global collection
 
-    cursor = collection.find({'districtsLocation':{"$exists":False}}).batch_size(50)
-    for art in tqdm(cursor):
+    # cursor = collection.find({'districtsLocation':{"$exists":False}}).batch_size(50)
+    cursor = collection.find({}).batch_size(50)
+    for art in cursor:
         extractLocation(art)
     cursor.close()
 
